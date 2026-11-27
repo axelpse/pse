@@ -594,3 +594,18 @@ html.porte .outils,html.porte #maki,html.porte footer{display:none}
 .id-choix select{flex:1;min-width:0}
 .id-choix input{width:84px;text-align:center}
 .code-reprise-saisie{width:100%;text-transform:uppercase}
+
+/* ---------- Première connexion ---------- */
+.intro{padding-top:14px}
+.intro .gros{font-size:19px;color:var(--texte);max-width:420px}
+.intro .domaines.mini{grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.intro .domaines.mini .domaine{padding:12px}
+.intro>.btn.large{display:block;width:100%;max-width:340px;margin:18px auto 0}
+.ob-bas{display:flex;justify-content:center;gap:18px;flex-wrap:wrap}
+.choix-classe{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.choix-classe .rep{margin:0;text-align:center;font-weight:800}
+.intro .parcours{margin-top:10px}
+#obm{box-shadow:none;padding:0;max-width:none;margin:8px 0}
+#obm:empty{display:none}
+.niveaux.seul{grid-template-columns:1fr}
+.niveau.maclasse{border:2px solid var(--jaune)}

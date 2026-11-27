@@ -250,13 +250,9 @@
       '<p class="jauge"><b>Mon parcours</b><span class="barre"><i style="width:' + g + '%"></i></span><small>' + g + " %</small></p></div>" +
       '<div class="hero-img" id="route">' + window.DECOR.scene() + "</div></section>";
     h += '<div class="contenu">';
-    if (u) h += '<a class="une" href="#/' + u.niveau + "/" + u.module + '">' + I.epingle + "<span><small>Cette semaine</small>" + esc(u.texte) + "</span>" + I.fleche + "</a>";
-    h += '<h2>Choisis ton niveau</h2><div class="grille niveaux">';
-    S.niveaux.forEach(function (n) {
-      h += n.actif ? '<a class="carte niveau" href="#/' + n.id + '"><b>' + esc(n.nom) + "</b><small>" + esc(n.detail) + "</small>" + I.fleche + "</a>"
-                   : '<div class="carte niveau off"><b>' + esc(n.nom) + "</b><small>" + I.cadenas + esc(n.detail) + "</small></div>";
-    });
-    h += "</div>" + carteComp() + carteInstaller() + '<h2>Quatre domaines pour être responsable</h2><div class="grille domaines">';
+    if (u && (!st.niv || st.niv === u.niveau)) h += '<a class="une" href="#/' + u.niveau + "/" + u.module + '">' + I.epingle + "<span><small>Cette semaine</small>" + esc(u.texte) + "</span>" + I.fleche + "</a>";
+    h += cartesNiveaux();
+    h += carteComp() + carteInstaller() + '<h2>Quatre domaines pour être responsable</h2><div class="grille domaines">';
     [["A", "Ma santé"], ["B", "Mon environnement"], ["C", "Mon travail"], ["D", "Mes achats"]].forEach(function (d) {
       h += '<div class="domaine t' + d[0] + '"><span class="pic">' + I[d[0]] + "</span><b>" + d[1] + "</b><small>" + esc(S.thematiques[d[0]]) + "</small></div>";
     });
@@ -409,6 +405,7 @@
       '<button class="btn sec" data-action="hasard-pseudo">' + I.de + "Une idée</button></div>";
     h += '<div id="editeur">' + editeur() + "</div></div></div>";
     h += '<h2>Mon parcours</h2><p>Dis-moi ce que tu prépares et où tu habites : les exemples des cours seront adaptés à ton métier et à ta commune.</p><div class="parcours">' +
+      '<label for="nivsel">Ma classe</label><select id="nivsel"><option value="">Je choisis…</option>' + S.niveaux.map(function (n) { return '<option value="' + n.id + '"' + (st.niv === n.id ? " selected" : "") + ">" + esc(n.nom) + "</option>"; }).join("") + "</select>" +
       '<label for="fil">Mon diplôme</label><select id="fil"><option value="0">Je choisis…</option>' +
       P.metiers.map(function (m, k) { return '<option value="' + (k + 1) + '"' + (st.fil === k + 1 ? " selected" : "") + ">" + esc(m.diplome) + "</option>"; }).join("") + "</select>" +
       '<label for="com">Ma commune</label><select id="com"><option value="0">Je choisis…</option>' +
@@ -1115,7 +1112,7 @@
       if (!ns) return dire("Ton code de reprise n'est pas bon : vérifie chaque lettre.");
       if (!codeValide(cr)) return dire("Ton code secret doit avoir entre 4 et 8 chiffres.");
       var sel2 = String(Date.now()) + hasard(1e6), idr = document.getElementById("cptf").value + " " + nb;
-      ns.compte = { id: idr, sel: sel2, h: hacher(sel2, cr) }; if (!ns.pseudo) ns.pseudo = idr;
+      ns.compte = { id: idr, sel: sel2, h: hacher(sel2, cr) }; ns.intro = true; if (!ns.pseudo) ns.pseudo = idr;
       st = ns; cpt.msg = ""; cpt.vue = "choix"; save(); appliquerTheme(); ouvrir(true); rendu(); window.scrollTo(0, 0);
     }
     else if (a === "cpt-autre") { cpt.id = idHasard(); document.getElementById("cptid").textContent = cpt.id; }
@@ -1148,6 +1145,70 @@
       document.getElementById("cpta").value = ""; document.getElementById("cptn").value = "";
       m.textContent = "C'est fait, ton code secret est changé. Note-le dans ton cahier."; m.className = "msg oui";
     }
+  }
+  /* ---------- La première connexion : Maki présente la PSE, puis l'élève règle son profil ---------- */
+  var ob = { i: 0, msg: "" }, OB_N = 4;
+  function nivNom(id) { var n = S.niveaux.filter(function (x) { return x.id === id; })[0]; return n ? n.nom : ""; }
+  function nivFini(id) { var ms = S.modules[id] || []; return ms.length > 0 && ms.every(function (m) { return dispo(m).length > 0 && avancement(m) === 1; }); }
+  // Les niveaux proposés à l'accueil selon la classe choisie : [niveau, état] avec état = "ouvert", "bientot" ou "verrou"
+  function niveauxPourMoi() {
+    var ids = S.niveaux.map(function (n) { return n.id; }), moi = ids.indexOf(st.niv);
+    function contenu(n) { return n.actif && (S.modules[n.id] || []).length > 0; }
+    if (moi < 0) return S.niveaux.map(function (n) { return [n, contenu(n) ? "ouvert" : "bientot"]; }); // classe pas encore choisie
+    if (st.niv === "cap") return [[S.niveaux[moi], contenu(S.niveaux[moi]) ? "ouvert" : "bientot"]];
+    var bac = S.niveaux.filter(function (n) { return n.id !== "cap"; }), k = bac.map(function (n) { return n.id; }).indexOf(st.niv);
+    return bac.map(function (n, j) {
+      if (j <= k) return [n, contenu(n) ? "ouvert" : "bientot"]; // ma classe et les années d'avant
+      var avant = bac.slice(0, j).every(function (x) { return nivFini(x.id); }); // les années d'après : seulement quand tout ce qui précède est fait
+      return [n, avant ? (contenu(n) ? "ouvert" : "bientot") : "verrou"];
+    });
+  }
+  function cartesNiveaux() {
+    var liste = niveauxPourMoi(), h = "<h2>" + (st.niv ? "Mon niveau" : "Choisis ton niveau") + '</h2><div class="grille niveaux' + (liste.length === 1 ? " seul" : "") + '">';
+    liste.forEach(function (x) {
+      var n = x[0], moi = n.id === st.niv;
+      if (x[1] === "ouvert") h += '<a class="carte niveau' + (moi ? " maclasse" : "") + '" href="#/' + n.id + '"><b>' + esc(n.nom) + "</b><small>" + (moi ? "Ma classe" : esc(n.detail)) + "</small>" + I.fleche + "</a>";
+      else h += '<div class="carte niveau off' + (moi ? " maclasse" : "") + '"><b>' + esc(n.nom) + "</b><small>" + I.cadenas + (x[1] === "verrou" ? "Termine d'abord les années d'avant" : (moi ? "Ma classe · bientôt" : "Bientôt")) + "</small></div>";
+    });
+    return h + "</div>";
+  }
+  function choixClasse(id) {
+    return '<div class="choix-classe" role="group" aria-label="Ma classe">' + S.niveaux.map(function (n) { return '<button class="rep' + (st.niv === n.id ? " coche" : "") + '" data-niv="' + n.id + '"' + (id ? ' data-ou="' + id + '"' : "") + ">" + esc(n.nom) + "</button>"; }).join("") + "</div>";
+  }
+  function pageIntro() {
+    var i = ob.i, h = '<div class="contenu etroit intro"><div class="lecon-haut"><div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="' + OB_N + '" aria-valuenow="' + (i + 1) + '"><i style="width:' + ((i + 1) / OB_N * 100) + '%"></i></div></div>';
+    if (i === 0) {
+      h += '<div class="porte-accueil" data-lire>' + window.DECOR.maki("salut", 130) + "<h1>Moi, c'est " + esc(M.nom) + " !</h1><p class=\"gros\">Je vais t'accompagner en PSE : <b>Prévention Santé Environnement</b>.</p><p class=\"gros\">La PSE t'apprend à prendre soin de toi, des autres et de la planète. À la maison, dehors et au travail.</p>" + parle() + "</div>";
+      h += '<div class="grille domaines mini">' + [["A", "Ma santé", "Dormir, manger, bouger"], ["B", "Mon environnement", "L'eau, l'énergie, les risques"], ["C", "Mon travail", "Rester en sécurité"], ["D", "Mes achats", "Gérer mon argent"]].map(function (d) {
+        return '<div class="domaine t' + d[0] + '"><span class="pic">' + I[d[0]] + "</span><b>" + d[1] + "</b><small>" + d[2] + "</small></div>";
+      }).join("") + "</div>";
+    } else if (i === 1) {
+      h += '<div data-lire><h1>Comment ça marche ?</h1><ol class="retenir"><li><span><b>Une histoire.</b> Elle pourrait t\'arriver.</span></li><li><span><b>Une idée, puis un exercice.</b> Si tu te trompes, tu recommences.</span></li><li><span><b>Un QCM et un défi.</b> Pour voir ce que tu as retenu.</span></li><li><span><b>Besoin d\'aide ?</b> Touche-moi, en bas de l\'écran. Je peux aussi lire les textes.</span></li></ol>' + parle() + "</div>";
+      h += makiDit("pense", "Ici, il n'y a pas de note. Tu avances à ton rythme, et tout reste dans ton téléphone.");
+    } else if (i === 2) {
+      h += "<h1>Ma classe</h1><p>Je te montre les cours de ta classe.</p>" + choixClasse("intro");
+      if (st.niv === "cap") h += '<div class="parcours"><label for="fil">Mon diplôme</label><select id="fil"><option value="0">Je choisis…</option>' + P.metiers.map(function (m, k) { return '<option value="' + (k + 1) + '"' + (st.fil === k + 1 ? " selected" : "") + ">" + esc(m.diplome) + "</option>"; }).join("") + "</select></div>";
+      if (st.niv) h += '<div class="parcours"><label for="com">Ma commune</label><select id="com"><option value="0">Je choisis…</option>' + P.communes.map(function (c, k) { return '<option value="' + (k + 1) + '"' + (st.com === k + 1 ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") + "</select></div><p class=\"petit\">Les exemples des cours s'adaptent à ton métier et à ta commune.</p>";
+      h += '<p id="obm" class="msg non" role="alert">' + esc(ob.msg) + "</p>";
+    } else {
+      h += '<h1>Mon style</h1><div class="porte-accueil"><div id="grand">' + avatar(st.av, 150) + '</div><button class="btn sec petitbtn" data-action="ob-avatar">' + I.de + "Un autre avatar</button></div>";
+      h += '<h2>Mes couleurs</h2><div class="themes">' + THEMES.map(function (t, k) { return '<button class="theme-btn' + ((st.theme || 0) === k ? " sel" : "") + '" data-theme="' + k + '"><span style="background:linear-gradient(135deg,' + t[1] + " 55%," + t[2] + ' 55%)"></span>' + t[0] + "</button>"; }).join("") + "</div>";
+      h += '<p class="petit">Tu pourras tout régler en détail dans ton profil : coiffure, tenue, pseudo…</p>';
+    }
+    h += '<button class="btn large" data-action="ob-suite">' + (i === OB_N - 1 ? "C'est parti !" : "Continuer") + "</button>";
+    h += '<p class="petit ob-bas">' + (i > 0 ? '<button class="lienbtn" data-action="ob-retour">‹ Retour</button>' : "") + (i < 2 ? '<button class="lienbtn" data-action="ob-passer">Passer la présentation</button>' : "") + "</p>";
+    return h + "</div>";
+  }
+  function actionIntro(a) {
+    if (a === "ob-avatar") { st.av = OPT.map(function (n, k) { return k === 8 || k === 9 || k === 7 ? (hasard(2) ? hasard(n) : 0) : hasard(n); }); save(); rendu(); return; }
+    if (a === "ob-retour") ob.i = Math.max(0, ob.i - 1);
+    else if (a === "ob-passer") ob.i = 2; // on passe la présentation, pas le choix de la classe
+    else if (a === "ob-suite") {
+      if (ob.i === 2 && !st.niv) { ob.msg = "Touche ta classe pour continuer."; rendu(); return; }
+      if (ob.i === OB_N - 1) { st.intro = true; ob.i = 0; save(); rendu(); window.scrollTo(0, 0); return; }
+      ob.i++;
+    }
+    ob.msg = ""; rendu(); window.scrollTo(0, 0);
   }
   /* ---------- L'appli sur le téléphone ---------- */
   function installee() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
@@ -1267,7 +1328,9 @@
   function rendu() {
     var p = (location.hash.replace(/^#\/?/, "") || "").split("/");
     var h; page = p; makiTexte = ""; arreter(); reelStop(); reel = null;
+    var enIntro = ouvert && !st.intro && !st.prof;
     if (!ouvert) h = pageCompte();
+    else if (enIntro) h = pageIntro();
     else if (!p[0]) h = pageAccueil();
     else if (p[0] === "qcm") h = pageQcm(p[1]);
     else if (p[0] === "profil") h = pageProfil();
@@ -1282,8 +1345,8 @@
     if (p[0] !== "qcm") quiz = null;
     if (p[2] !== "lecon" && p[0] !== "jeu" && !(p[0] === "competences" && p[2] === "exo")) exo = null;
     $app.innerHTML = h; majEntete(); placerMarcheur(); majMaki();
-    document.documentElement.classList.toggle("porte", !ouvert);
-    document.documentElement.classList.toggle("en-lecon", ouvert && (p[2] === "lecon" || (p[0] === "jeu" && !!p[2]) || (p[0] === "competences" && p[2] === "exo")));
+    document.documentElement.classList.toggle("porte", !ouvert || enIntro);
+    document.documentElement.classList.toggle("en-lecon", ouvert && !enIntro && (p[2] === "lecon" || (p[0] === "jeu" && !!p[2]) || (p[0] === "competences" && p[2] === "exo")));
     majReel();
     if (p[0] === "qcm" && acc().auto && document.getElementById("zoneq") && quiz && quiz.rep === null) lire(document.getElementById("zoneq"), document.querySelector("#zoneq .parle"));
   }
@@ -1296,7 +1359,7 @@
   }
   function montre(t, el) { if (el) el.insertAdjacentHTML("afterend", '<input class="copie" readonly value="' + esc(t) + '">'); }
   document.addEventListener("click", function (e) {
-    var el = e.target.closest("[data-rep],[data-action],[data-av],[data-vu],[data-copie],[data-onglet],[data-modtab],[data-theme],[data-faq],[data-acc],[data-exo]"); if (!el) return;
+    var el = e.target.closest("[data-rep],[data-action],[data-av],[data-vu],[data-copie],[data-onglet],[data-modtab],[data-niv],[data-theme],[data-faq],[data-acc],[data-exo]"); if (!el) return;
     if (el.dataset.action && el.dataset.action.indexOf("reel-") === 0) { reelAction(el.dataset.action); return; }
     if (el.dataset.exo != null && el.dataset.exo !== "" && page[0] === "competences" && page[2] === "exo") {
       var cc = comp(page[1]); if (cc && exo) { var ce = cc.exercices[Math.max(0, Math.min(cc.exercices.length - 1, +page[3] || 0))]; if (jouerExo(ce, el.dataset.exo)) rendu(); }
@@ -1324,9 +1387,11 @@
     if (el.dataset.av) { var v = el.dataset.av.split(","); st.av[+v[0]] = +v[1]; save(); majProfil(); return; }
     if (el.dataset.onglet) { onglet = +el.dataset.onglet; majProfil(); return; }
     if (el.dataset.modtab) { modTab.t = el.dataset.modtab; var y = window.scrollY; rendu(); window.scrollTo(0, y); var ac = document.querySelector(".modtabs .actif"); if (ac) ac.focus({ preventScroll: true }); return; }
+    if (el.dataset.niv) { st.niv = el.dataset.niv; if (st.niv !== "cap") st.fil = 0; ob.msg = ""; save(); rendu(); return; }
     if (el.dataset.theme) { st.theme = +el.dataset.theme; save(); appliquerTheme(); rendu(); return; }
     var a = el.dataset.action;
     if (a && a.indexOf("cpt-") === 0) { actionCompte(a, el); return; }
+    if (a && a.indexOf("ob-") === 0) { actionIntro(a); return; }
     if (a === "maki") { arreter(); makiOuvert = !makiOuvert; makiTexte = ""; majMaki(); return; }
     if (a === "hasard-avatar") { st.av = OPT.map(function (n, k) { return k === 8 || k === 9 || k === 7 ? (hasard(2) ? hasard(n) : 0) : hasard(n); }); save(); majProfil(); }
     else if (a === "hasard-pseudo") { st.pg = [hasard(32), hasard(32)]; st.pseudo = nomPseudo(st.pg); save(); document.getElementById("pseudo").value = st.pseudo; majProfil(); }
@@ -1336,10 +1401,10 @@
     else if (a === "reprendre") {
       var ns = decode(document.getElementById("saisie").value), msg = document.getElementById("msg");
       if (!ns) { msg.textContent = "Code incorrect : vérifie chaque lettre."; msg.className = "msg non"; return; }
-      ns.compte = st.compte; st = ns; save(); appliquerTheme(); rendu(); var m2 = document.getElementById("msg"); m2.textContent = "C'est bon, ta progression est de retour !"; m2.className = "msg oui";
+      ns.compte = st.compte; ns.intro = st.intro; ns.niv = st.niv; st = ns; save(); appliquerTheme(); rendu(); var m2 = document.getElementById("msg"); m2.textContent = "C'est bon, ta progression est de retour !"; m2.className = "msg oui";
     }
     else if (a === "effacer") {
-      if (el.dataset.confirme) { var cp0 = st.compte; st = defaut(); st.compte = cp0; save(); appliquerTheme(); rendu(); }
+      if (el.dataset.confirme) { var cp0 = st.compte, nv0 = st.niv; st = defaut(); st.compte = cp0; st.niv = nv0; st.intro = true; save(); appliquerTheme(); rendu(); }
       else { el.dataset.confirme = "1"; el.textContent = "Tu es sûr ? Touche encore pour tout effacer"; }
     }
   });
@@ -1354,6 +1419,7 @@
     if (e.target.id === "prof") { st.prof = e.target.checked; save(); }
     if (e.target.id === "voix") { acc().voix = e.target.value; save(); }
     if (e.target.id === "fil") { st.fil = +e.target.value; save(); majProfil(); }
+    if (e.target.id === "nivsel") { st.niv = e.target.value || ""; if (st.niv && st.niv !== "cap") st.fil = 0; save(); rendu(); }
     if (e.target.id === "com") { st.com = +e.target.value; save(); majProfil(); }
   });
 

@@ -117,3 +117,13 @@ Conséquences à connaître :
 - le code secret empêche un camarade d'ouvrir le parcours sur un téléphone prêté. Ce n'est pas un coffre-fort.
 
 La liste des fruits et légumes est dans `js/app.js`, sur la ligne `var FRUITS = [...]`.
+
+## La première connexion
+
+Après la création du compte, Maki présente la PSE et le site en deux écrans, puis l'élève choisit sa classe (CAP, 2de, 1re ou Tle Bac Pro), son diplôme, sa commune, son avatar et ses couleurs. Il peut tout modifier ensuite dans son profil.
+
+L'accueil affiche ensuite les niveaux selon la classe choisie :
+- un élève de CAP ne voit que le CAP ;
+- un élève de Bac Pro voit sa classe et les années d'avant, ouvertes. Les années d'après restent fermées tant que toutes les années précédentes ne sont pas terminées.
+
+Les niveaux Bac Pro n'ont pas encore de contenu : ils s'affichent avec la mention « bientôt ».
