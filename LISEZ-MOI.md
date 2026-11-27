@@ -107,13 +107,13 @@ Ouvert directement depuis le dossier (double-clic sur `index.html`), le site mar
 
 ## Le compte de l'élève
 
-À la première ouverture, le site propose à l'élève de créer son compte : un identifiant tiré au hasard (un fruit ou un légume suivi d'un nombre, par exemple « Mangue 42 ») et un code secret de 4 à 8 chiffres qu'il choisit. Le code secret est ensuite demandé à chaque ouverture.
+À la première ouverture, l'écran d'entrée propose « Me connecter » et « Créer mon compte ». Le compte, c'est un identifiant tiré au hasard (un fruit ou un légume suivi d'un nombre, par exemple « Mangue 42 ») et un code secret de 4 à 8 chiffres qu'il choisit. Le code secret est ensuite demandé à chaque ouverture.
 
 Ce compte est anonyme et reste dans le téléphone : rien n'est envoyé, aucune liste n'existe, et personne, même l'enseignant, ne peut relier un identifiant à un élève. Le site reste donc sans serveur et sans donnée personnelle.
 
 Conséquences à connaître :
 - un code secret oublié ne peut pas être retrouvé. L'élève crée alors un nouveau compte, puis retrouve sa progression avec son code de reprise s'il l'a noté ;
-- pour changer de téléphone, l'élève crée un compte sur le nouveau, puis tape son code de reprise ;
+- pour changer de téléphone, l'élève touche « Me connecter » sur le nouveau, puis donne son identifiant, son code de reprise et un code secret ;
 - le code secret empêche un camarade d'ouvrir le parcours sur un téléphone prêté. Ce n'est pas un coffre-fort.
 
 La liste des fruits et légumes est dans `js/app.js`, sur la ligne `var FRUITS = [...]`.

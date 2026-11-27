@@ -580,3 +580,17 @@ html.porte .outils,html.porte #maki,html.porte footer{display:none}
 .changer-code .btn{margin-top:10px}
 #cptm{box-shadow:none;padding:0;max-width:none;border-radius:0;margin:8px 0}
 #cptm:empty{display:none}
+
+/* ---------- Écran d'entrée : se connecter ou créer un compte ---------- */
+.porte-accueil{display:grid;justify-items:center;gap:10px;text-align:center;padding:8px 0 4px}
+.porte-accueil h1{margin:4px 0 0}
+.porte-accueil p{margin:0 0 8px;color:var(--doux)}
+.porte-accueil .btn.large{width:100%;max-width:340px;margin:0}
+.porte-page .form-compte{max-width:340px;margin-left:auto;margin-right:auto}
+.porte-page>.btn.large{display:block;width:100%;max-width:340px;margin-left:auto;margin-right:auto}
+.porte-page>.petit{text-align:center}
+.id-choix{display:flex;gap:8px}
+.id-choix select,.id-choix input,.code-reprise-saisie{font:inherit;font-size:18px;padding:12px 14px;border-radius:14px;border:2px solid var(--trait);background:var(--carte);color:var(--texte);min-height:52px}
+.id-choix select{flex:1;min-width:0}
+.id-choix input{width:84px;text-align:center}
+.code-reprise-saisie{width:100%;text-transform:uppercase}

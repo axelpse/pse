@@ -1065,21 +1065,32 @@
   }
   function codeBon(code) { return !!st.compte && hacher(st.compte.sel, code) === st.compte.h; }
   function codeValide(c) { return /^\d{4,8}$/.test(c); }
-  var ouvert = false, cpt = { id: idHasard(), msg: "", oubli: false };
+  var ouvert = false, cpt = { id: idHasard(), msg: "", oubli: false, vue: "choix" };
   try { ouvert = sessionStorage.getItem("pse-ouvert") === "1"; } catch (e) {}
   function ouvrir(oui) { ouvert = oui; try { if (oui) sessionStorage.setItem("pse-ouvert", "1"); else sessionStorage.removeItem("pse-ouvert"); } catch (e) {} }
   function champCode(id, label) { return '<label for="' + id + '">' + label + '</label><input id="' + id + '" class="code-secret" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off">'; }
   function pageCompte() {
     var h = '<div class="contenu etroit porte-page">';
-    if (!st.compte) {
-      h += "<h1>Crée ton compte</h1>" + makiDit("salut", "Karibu ! Je ne te demande ni ton nom ni ton adresse. Voici ton identifiant, tiré au hasard. Choisis ensuite ton code secret.");
+    var retour = '<p class="petit"><button class="lienbtn" data-action="cpt-vue-choix">‹ Retour</button></p>';
+    if (!st.compte && cpt.vue === "creer") {
+      h += "<h1>Crée ton compte</h1>" + makiDit("salut", "Je ne te demande ni ton nom ni ton adresse. Voici ton identifiant, tiré au hasard. Choisis ensuite ton code secret.");
       h += '<p class="etiquette">Mon identifiant</p><div class="id-compte"><b id="cptid">' + esc(cpt.id) + '</b><button class="btn sec petitbtn" data-action="cpt-autre">' + I.de + "Un autre</button></div>";
       h += '<div class="form-compte">' + champCode("cpt1", "Mon code secret <small>(4 chiffres ou plus)</small>") + champCode("cpt2", "Encore une fois, pour vérifier") + "</div>";
       h += '<p id="cptm" class="msg non" role="alert">' + esc(cpt.msg) + '</p><button class="btn large" data-action="cpt-creer">Créer mon compte</button>';
-      h += '<p class="comp-note">Recopie ton identifiant et ton code secret dans ton cahier. Personne ne peut les retrouver pour toi, même pas ton professeur.</p>';
-      h += '<p class="petit"><button class="lienbtn" data-action="cpt-tard">Plus tard</button></p>';
+      h += '<p class="comp-note">Recopie ton identifiant et ton code secret dans ton cahier. Personne ne peut les retrouver pour toi, même pas ton professeur.</p>' + retour;
+    } else if (!st.compte && cpt.vue === "retrouver") {
+      h += "<h1>Me connecter</h1>" + makiDit("pense", "Il n'y a pas encore de compte sur ce téléphone. Pour retrouver ton parcours ici, il me faut ton identifiant et ton code de reprise.");
+      h += '<div class="form-compte"><label for="cptf">Mon identifiant</label><div class="id-choix"><select id="cptf">' + FRUITS.map(function (f) { return "<option>" + esc(f) + "</option>"; }).join("") + '</select><input id="cptn2" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="42" aria-label="Le nombre de mon identifiant" autocomplete="off"></div>';
+      h += '<label for="cptr">Mon code de reprise <small>(noté dans mon cahier)</small></label><input id="cptr" class="code-reprise-saisie" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters">';
+      h += champCode("cpt1", "Mon code secret <small>(4 chiffres ou plus)</small>") + "</div>";
+      h += '<p id="cptm" class="msg non" role="alert">' + esc(cpt.msg) + '</p><button class="btn large" data-action="cpt-retrouver">Me connecter</button>';
+      h += '<p class="comp-note">Tu n\'as pas noté ton code de reprise ? Crée un nouveau compte : tu recommenceras ton parcours sur ce téléphone.</p>' + retour;
+    } else if (!st.compte) {
+      h += '<div class="porte-accueil">' + window.DECOR.maki("salut", 150) + "<h1>Karibu !</h1><p>Entre dans ton parcours de PSE.</p>";
+      h += '<button class="btn large" data-action="cpt-vue-retrouver">Me connecter</button><button class="btn large clair" data-action="cpt-vue-creer">Créer mon compte</button>';
+      h += '<p class="petit"><button class="lienbtn" data-action="cpt-tard">Continuer sans compte</button></p></div>';
     } else {
-      h += "<h1>Bonjour " + esc(st.compte.id) + " !</h1>" + makiDit("salut", "Content de te revoir ! Tape ton code secret pour ouvrir ton parcours.");
+      h += '<div class="porte-accueil">' + window.DECOR.maki("salut", 120) + "<h1>Bonjour " + esc(st.compte.id) + " !</h1><p>Tape ton code secret pour ouvrir ton parcours.</p></div>";
       h += '<div class="form-compte">' + champCode("cptc", "Mon code secret") + "</div>";
       h += '<p id="cptm" class="msg non" role="alert">' + esc(cpt.msg) + '</p><button class="btn large" data-action="cpt-entrer">Entrer</button>';
       if (!cpt.oubli) h += '<p class="petit"><button class="lienbtn" data-action="cpt-oubli">J\'ai oublié mon code secret</button></p>';
@@ -1097,7 +1108,17 @@
   function actionCompte(a, el) {
     function val(id) { var z = document.getElementById(id); return z ? z.value.trim() : ""; }
     function dire(t) { cpt.msg = t; var m = document.getElementById("cptm"); if (m) { m.textContent = t; m.className = "msg non"; } }
-    if (a === "cpt-autre") { cpt.id = idHasard(); document.getElementById("cptid").textContent = cpt.id; }
+    if (a.indexOf("cpt-vue-") === 0) { cpt.vue = a.slice(8); cpt.msg = ""; rendu(); window.scrollTo(0, 0); var z1 = document.querySelector(".porte-page input, .porte-page select"); if (z1 && cpt.vue !== "choix") z1.focus(); }
+    else if (a === "cpt-retrouver") {
+      var nb = val("cptn2"), cr = val("cpt1"), ns = decode(val("cptr"));
+      if (!/^\d{2}$/.test(nb)) return dire("Écris le nombre de ton identifiant, par exemple 42.");
+      if (!ns) return dire("Ton code de reprise n'est pas bon : vérifie chaque lettre.");
+      if (!codeValide(cr)) return dire("Ton code secret doit avoir entre 4 et 8 chiffres.");
+      var sel2 = String(Date.now()) + hasard(1e6), idr = document.getElementById("cptf").value + " " + nb;
+      ns.compte = { id: idr, sel: sel2, h: hacher(sel2, cr) }; if (!ns.pseudo) ns.pseudo = idr;
+      st = ns; cpt.msg = ""; cpt.vue = "choix"; save(); appliquerTheme(); ouvrir(true); rendu(); window.scrollTo(0, 0);
+    }
+    else if (a === "cpt-autre") { cpt.id = idHasard(); document.getElementById("cptid").textContent = cpt.id; }
     else if (a === "cpt-creer") {
       var c1 = val("cpt1"), c2 = val("cpt2");
       if (!codeValide(c1)) return dire("Ton code secret doit avoir entre 4 et 8 chiffres.");
@@ -1106,7 +1127,7 @@
       var sel = String(Date.now()) + hasard(1e6);
       st.compte = { id: cpt.id, sel: sel, h: hacher(sel, c1) };
       if (!st.pseudo) st.pseudo = cpt.id;
-      cpt.msg = ""; save(); ouvrir(true); rendu(); window.scrollTo(0, 0);
+      cpt.msg = ""; cpt.vue = "choix"; save(); ouvrir(true); rendu(); window.scrollTo(0, 0);
     }
     else if (a === "cpt-tard") { cpt.msg = ""; ouvrir(true); rendu(); }
     else if (a === "cpt-entrer") {
@@ -1115,10 +1136,10 @@
     }
     else if (a === "cpt-oubli") { cpt.oubli = true; cpt.msg = ""; rendu(); }
     else if (a === "cpt-neuf") {
-      if (el.dataset.confirme) { st = defaut(); cpt = { id: idHasard(), msg: "", oubli: false }; save(); appliquerTheme(); rendu(); }
+      if (el.dataset.confirme) { st = defaut(); cpt = { id: idHasard(), msg: "", oubli: false, vue: "creer" }; save(); appliquerTheme(); rendu(); }
       else { el.dataset.confirme = "1"; el.textContent = "Tu es sûr ? Touche encore pour tout effacer"; }
     }
-    else if (a === "cpt-ouvrir" || a === "cpt-verrou") { cpt.msg = ""; cpt.oubli = false; ouvrir(false); rendu(); window.scrollTo(0, 0); }
+    else if (a === "cpt-ouvrir" || a === "cpt-verrou") { cpt.msg = ""; cpt.oubli = false; cpt.vue = a === "cpt-ouvrir" ? "creer" : "choix"; ouvrir(false); rendu(); window.scrollTo(0, 0); }
     else if (a === "cpt-changer") {
       var m = document.getElementById("cptm");
       if (!codeBon(val("cpta"))) { m.textContent = "Ton code secret actuel n'est pas le bon."; m.className = "msg non"; return; }
@@ -1324,7 +1345,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" || !e.target || !e.target.classList || !e.target.classList.contains("code-secret")) return;
-    var b = document.querySelector('[data-action="cpt-creer"],[data-action="cpt-entrer"],[data-action="cpt-changer"]'); if (b) { e.preventDefault(); b.click(); }
+    var b = document.querySelector('[data-action="cpt-creer"],[data-action="cpt-entrer"],[data-action="cpt-retrouver"],[data-action="cpt-changer"]'); if (b) { e.preventDefault(); b.click(); }
   });
   document.addEventListener("input", function (e) {
     if (e.target.id === "pseudo") { st.pseudo = e.target.value.trim(); st.pg = null; save(); majProfil(); }
