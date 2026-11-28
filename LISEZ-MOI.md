@@ -31,6 +31,7 @@ site_pse/
 ├─ js/images.js        pictogrammes et illustrations des leçons (dessinés dans le site, rien à télécharger)
 ├─ js/lecons_A.js … lecons_D.js  ← les leçons des thématiques A, B, C et D (une leçon par module)
 ├─ js/competences.js  ← les six compétences C1 à C6 (section commune à toutes les classes)
+├─ js/infos.js  ← les articles de « Je m'informe »
 ├─ js/jeux.js          ← le jeu du PAD : les situations à placer sur le schéma
 ├─ js/metiers.js       ← personnalisation : fiches métier des CAP et communes
 ├─ js/decor.js         illustrations (route, pictogrammes)
@@ -127,3 +128,11 @@ L'accueil affiche ensuite les niveaux selon la classe choisie :
 - un élève de Bac Pro voit sa classe et les années d'avant, ouvertes. Les années d'après restent fermées tant que toutes les années précédentes ne sont pas terminées.
 
 Les niveaux Bac Pro n'ont pas encore de contenu : ils s'affichent avec la mention « bientôt ».
+
+## Je m'informe
+
+La rubrique « Je m'informe » propose de courts articles en lecture facile, classés en Santé, Environnement et Économie. Chaque article donne l'info en une phrase, quelques paragraphes très courts, un chiffre, un mot à retenir, une question et la source.
+
+Tous les articles sont dans `js/infos.js`. Pour en ajouter un, copiez un bloc et changez les textes. Le premier de la liste est affiché « à la une » sur l'accueil.
+
+Ces articles sont rédigés pour le site à partir de sources officielles. Ce ne sont pas des copies d'articles de presse, qui sont protégés par le droit d'auteur.

@@ -609,3 +609,33 @@ html.porte .outils,html.porte #maki,html.porte footer{display:none}
 #obm:empty{display:none}
 .niveaux.seul{grid-template-columns:1fr}
 .niveau.maclasse{border:2px solid var(--jaune)}
+
+/* ---------- Je m'informe ---------- */
+.acces-actus{border-color:var(--lagon2)}
+.actus-badge{background:var(--Bclair,#e3f1f1)}
+.actus-badge .picto{display:grid;place-items:center}
+.actus-badge svg{width:34px;height:34px}
+.actus{display:grid;gap:12px;margin-top:6px}
+.actu{display:flex;gap:14px;align-items:center;text-decoration:none;border-left:6px solid var(--trait);padding:14px 16px}
+.actu.tA{border-left-color:var(--A)}.actu.tB{border-left-color:var(--B)}.actu.tD{border-left-color:var(--D)}
+.actu.lu{opacity:.75}
+.actu-pic{display:grid;place-items:center;flex:none;width:58px;height:58px;border-radius:16px;background:var(--fond)}
+.actu-pic svg{width:40px;height:40px}
+.actu-pic.grand{width:72px;height:72px}.actu-pic.grand svg{width:50px;height:50px}
+.actu-txt{display:block;min-width:0}
+.actu-txt small{display:block;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--doux)}
+.actu-txt b{display:block;font-size:18px;line-height:1.25;margin:2px 0}
+.actu-txt>span{display:block;color:var(--doux);font-size:15px}
+.article article{background:var(--carte);border-radius:var(--r);box-shadow:var(--ombre);padding:16px 18px;margin-bottom:14px}
+.article article p{font-size:19px;line-height:1.65;margin:0 0 12px}
+.article .essentiel{font-weight:800;font-size:20px;border-left:6px solid var(--jaune);padding-left:12px}
+.actu-tete{display:flex;gap:14px;align-items:center;margin:4px 0 12px}
+.actu-tete h1{margin:0;font-size:25px;line-height:1.2}
+.etiquette.rub.tA{background:var(--A);color:#fff}.etiquette.rub.tB{background:var(--B);color:#fff}.etiquette.rub.tD{background:var(--D);color:#fff}
+.actu-plus{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.actu-plus{grid-template-columns:1fr}}
+.actu-plus .bloc-mod{margin:0 0 14px}
+.actu-plus .nombre{display:block;font-size:26px;line-height:1.15;color:var(--titre);margin-bottom:4px;overflow-wrap:anywhere}
+.actu-plus p:last-child{margin:0}
+.article .source{font-size:14px;color:var(--doux);margin:14px 0}
+.article .btn.clair{display:block;text-align:center;margin:10px 0}

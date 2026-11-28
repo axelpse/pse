@@ -252,7 +252,7 @@
     h += '<div class="contenu">';
     if (u && (!st.niv || st.niv === u.niveau)) h += '<a class="une" href="#/' + u.niveau + "/" + u.module + '">' + I.epingle + "<span><small>Cette semaine</small>" + esc(u.texte) + "</span>" + I.fleche + "</a>";
     h += cartesNiveaux();
-    h += carteComp() + carteInstaller() + '<h2>Quatre domaines pour être responsable</h2><div class="grille domaines">';
+    h += carteActus() + carteComp() + carteInstaller() + '<h2>Quatre domaines pour être responsable</h2><div class="grille domaines">';
     [["A", "Ma santé"], ["B", "Mon environnement"], ["C", "Mon travail"], ["D", "Mes achats"]].forEach(function (d) {
       h += '<div class="domaine t' + d[0] + '"><span class="pic">' + I[d[0]] + "</span><b>" + d[1] + "</b><small>" + esc(S.thematiques[d[0]]) + "</small></div>";
     });
@@ -1210,6 +1210,50 @@
     }
     ob.msg = ""; rendu(); window.scrollTo(0, 0);
   }
+  /* ---------- Je m'informe : de courts articles en lecture facile ---------- */
+  var NF = window.INFOS || { articles: [], rubriques: {} };
+  var RUBT = { sante: "A", env: "B", eco: "D" }; // la couleur de chaque rubrique
+  function actu(id) { return NF.articles.filter(function (a) { return a.id === id; })[0] || null; }
+  function actuLue(a) { return !!(st.lu && st.lu[a.id]); }
+  function carteActus() {
+    if (!NF.articles.length) return "";
+    var a = NF.articles[0], nb = NF.articles.filter(actuLue).length;
+    return '<a class="carte acces-comp acces-actus" href="#/actus"><span class="comp-badge actus-badge">' + (pic(a.picto) || "i") + "</span><span><b>" + esc(NF.titre) + "</b><small>À la une : " + esc(a.titre) + (nb ? " · " + nb + " sur " + NF.articles.length + " lu" + (nb > 1 ? "s" : "") : "") + "</small></span>" + I.fleche + "</a>";
+  }
+  function pageActus(id) {
+    if (!NF.articles.length) return page404();
+    if (!id) {
+      if (modTab.cle !== "actus") modTab = { cle: "actus", t: "tout" };
+      var T = modTab.t, tabs = [["tout", "Tout"]].concat(Object.keys(NF.rubriques).map(function (k) { return [k, NF.rubriques[k]]; }));
+      var h = '<div class="contenu"><nav class="fil"><a href="#/">Accueil</a> › ' + esc(NF.titre) + "</nav><h1>" + esc(NF.titre) + "</h1>" + makiDit("salut", NF.intro);
+      h += '<div class="onglets modtabs comptabs" role="tablist" aria-label="Les rubriques">' + tabs.map(function (o) { return '<button role="tab" aria-selected="' + (o[0] === T) + '" class="onglet' + (o[0] === T ? " actif" : "") + '" data-modtab="' + o[0] + '">' + esc(o[1]) + "</button>"; }).join("") + "</div>";
+      var liste = NF.articles.filter(function (a) { return T === "tout" || a.rub === T; });
+      h += '<div class="actus">' + liste.map(function (a) {
+        return '<a class="carte actu t' + RUBT[a.rub] + (actuLue(a) ? " lu" : "") + '" href="#/actus/' + a.id + '"><span class="actu-pic">' + pic(a.picto) + '</span><span class="actu-txt"><small>' + esc(NF.rubriques[a.rub] || "") + (actuLue(a) ? " · lu" : "") + "</small><b>" + esc(a.titre) + "</b><span>" + esc(a.essentiel) + "</span></span></a>";
+      }).join("") + "</div>";
+      return h + "</div>";
+    }
+    var a = actu(id); if (!a) return page404();
+    var cle = "actu/" + a.id, e = a.question;
+    if (e && (!exo || exo.cle !== cle)) initExo(cle, e);
+    var x = '<div class="contenu etroit article"><nav class="fil"><a href="#/">Accueil</a> › <a href="#/actus">' + esc(NF.titre) + "</a></nav>";
+    x += '<article data-lire><p class="etiquette rub t' + RUBT[a.rub] + '">' + esc(NF.rubriques[a.rub] || "") + '</p><div class="actu-tete"><span class="actu-pic grand">' + pic(a.picto) + "</span><h1>" + esc(a.titre) + '</h1></div><p class="essentiel">' + esc(a.essentiel) + "</p>" + a.texte.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + parle("Écouter l'article") + "</article>";
+    x += '<div class="actu-plus">';
+    if (a.chiffre) x += '<section class="bloc-mod chiffre" data-lire><p class="etiquette">Le chiffre</p><b class="nombre">' + esc(a.chiffre.nombre) + "</b><p>" + esc(a.chiffre.texte) + "</p></section>";
+    if (a.mot) x += '<section class="bloc-mod mot" data-lire><p class="etiquette">Le mot</p><b class="nombre">' + esc(a.mot.mot) + "</b><p>" + esc(a.mot.def) + "</p></section>";
+    x += "</div>";
+    if (e) {
+      x += '<h2>As-tu compris ?</h2>' + vueExo(e);
+      if (exo.fini) {
+        if (!actuLue(a)) { if (!st.lu) st.lu = {}; st.lu[a.id] = true; save(); }
+        x += '<div class="retour oui succes" data-lire role="status">' + window.DECOR.maki("bravo", 64) + "<div><b>" + (exo.raté ? "C'est ça, bien joué !" : "Bravo, du premier coup !") + "</b> " + esc(e.retour || "") + "</div></div>";
+      }
+    }
+    if (a.lien) x += '<a class="btn clair" href="' + a.lien.href + '">' + esc(a.lien.texte) + "</a>";
+    x += '<p class="source">' + esc(a.date || "") + (a.source ? " · Source : " + (a.source.lien ? '<a href="' + esc(a.source.lien) + '" target="_blank" rel="noopener">' + esc(a.source.nom) + "</a>" : esc(a.source.nom)) : "") + "</p>";
+    x += '<a class="btn large' + (exo && exo.fini ? "" : " clair") + '" href="#/actus">Voir les autres articles</a>';
+    return x + "</div>";
+  }
   /* ---------- L'appli sur le téléphone ---------- */
   function installee() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
   function carteInstaller() {
@@ -1288,6 +1332,7 @@
   ];
   function conseilPage() {
     var p = page, g = global();
+    if (p[0] === "actus") return p[1] ? "Lis l'article, ou touche « Écouter » pour que je te le lise. Ensuite, réponds à la question." : "Choisis un article. Chacun se lit en une minute.";
     if (p[0] === "installer") return "Suis les étapes une par une. Si tu n'y arrives pas, demande à ton professeur.";
     if (p[0] === "competences") return p[1] ? "Lis d'abord « Comprendre », puis la méthode et l'exemple. Ensuite, entraîne-toi avec les exercices." : "Les six compétences, c'est ce que tu dois savoir faire en PSE. Dans une évaluation, chaque question en travaille une. Touche une compétence pour la découvrir.";
     if (p[0] === "qcm") return "Prends ton temps : lis chaque réponse avant de choisir. Il te faut 7 sur 10 pour valider. Une erreur ? Lis l'explication, c'est comme ça qu'on apprend.";
@@ -1339,11 +1384,12 @@
     else if (p[0] === "jeu") h = pageJeu(p[1], p[2]);
     else if (p[0] === "competences") h = pageCompetences(p[1], p[2], p[3]);
     else if (p[0] === "installer") h = pageInstaller();
+    else if (p[0] === "actus") h = pageActus(p[1]);
     else if (p[2] === "lecon") h = pageLecon(p[0], p[1].toUpperCase(), p[3]);
     else if (p[1]) h = pageModule(p[0], p[1].toUpperCase());
     else h = pageNiveau(p[0]);
     if (p[0] !== "qcm") quiz = null;
-    if (p[2] !== "lecon" && p[0] !== "jeu" && !(p[0] === "competences" && p[2] === "exo")) exo = null;
+    if (p[2] !== "lecon" && p[0] !== "jeu" && !(p[0] === "competences" && p[2] === "exo") && !(p[0] === "actus" && p[1])) exo = null;
     $app.innerHTML = h; majEntete(); placerMarcheur(); majMaki();
     document.documentElement.classList.toggle("porte", !ouvert || enIntro);
     document.documentElement.classList.toggle("en-lecon", ouvert && !enIntro && (p[2] === "lecon" || (p[0] === "jeu" && !!p[2]) || (p[0] === "competences" && p[2] === "exo")));
@@ -1361,6 +1407,10 @@
   document.addEventListener("click", function (e) {
     var el = e.target.closest("[data-rep],[data-action],[data-av],[data-vu],[data-copie],[data-onglet],[data-modtab],[data-niv],[data-theme],[data-faq],[data-acc],[data-exo]"); if (!el) return;
     if (el.dataset.action && el.dataset.action.indexOf("reel-") === 0) { reelAction(el.dataset.action); return; }
+    if (el.dataset.exo != null && el.dataset.exo !== "" && page[0] === "actus" && page[1]) {
+      var ar = actu(page[1]); if (ar && ar.question && exo && jouerExo(ar.question, el.dataset.exo)) { var y2 = window.scrollY; rendu(); window.scrollTo(0, y2); }
+      return;
+    }
     if (el.dataset.exo != null && el.dataset.exo !== "" && page[0] === "competences" && page[2] === "exo") {
       var cc = comp(page[1]); if (cc && exo) { var ce = cc.exercices[Math.max(0, Math.min(cc.exercices.length - 1, +page[3] || 0))]; if (jouerExo(ce, el.dataset.exo)) rendu(); }
       return;
