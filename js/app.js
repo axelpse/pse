@@ -252,7 +252,7 @@
     h += '<div class="contenu">';
     if (u && (!st.niv || st.niv === u.niveau)) h += '<a class="une" href="#/' + u.niveau + "/" + u.module + '">' + I.epingle + "<span><small>Cette semaine</small>" + esc(u.texte) + "</span>" + I.fleche + "</a>";
     h += cartesNiveaux();
-    h += carteActus() + carteComp() + carteInstaller() + '<h2>Quatre domaines pour être responsable</h2><div class="grille domaines">';
+    h += carteActus() + carteComp() + carteOutils() + carteInstaller() + '<h2>Quatre domaines pour être responsable</h2><div class="grille domaines">';
     [["A", "Ma santé"], ["B", "Mon environnement"], ["C", "Mon travail"], ["D", "Mes achats"]].forEach(function (d) {
       h += '<div class="domaine t' + d[0] + '"><span class="pic">' + I[d[0]] + "</span><b>" + d[1] + "</b><small>" + esc(S.thematiques[d[0]]) + "</small></div>";
     });
@@ -1039,7 +1039,7 @@
     function puces(a) { return '<ul class="comp-liste">' + a.map(function (p) { return "<li>" + I.ok + "<span>" + esc(p) + "</span></li>"; }).join("") + "</ul>"; }
     if (T === "comprendre") {
       f += '<div data-lire><h2>Ça veut dire quoi ?</h2>' + c.cestquoi.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + parle() + "</div>";
-      f += '<div data-lire><h2>Les mots de la consigne</h2><p>Quand tu lis un de ces mots, c\'est cette compétence qui est demandée.</p><p class="verbes">' + c.verbes.map(function (v) { return "<span>" + esc(v) + "</span>"; }).join("") + "</p></div>";
+      f += '<div data-lire><h2>Les mots de la consigne</h2><p>Quand tu lis un de ces mots, c\'est cette compétence qui est demandée.</p><p class="verbes">' + c.verbes.map(boutonVerbe).join("") + "</p><p class=\"aide-verbe\">Touche un mot pour voir ce qu'il te demande.</p></div>";
     } else if (T === "methode") {
       f += '<div data-lire><h2>Ma méthode</h2><ol class="retenir">' + c.methode.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ol>" + parle() + "</div>";
     } else if (T === "exemple") {
@@ -1259,6 +1259,92 @@
     x += '<a class="btn large' + (exo && exo.fini ? "" : " clair") + '" href="#/actus">Voir les autres articles</a>';
     return x + "</div>";
   }
+
+  /* ---------- Mes outils (QQOQCP, PAD, ITAMaMi, Ishikawa) et les verbes de consigne ---------- */
+  var OT = window.OUTILS || { liste: [], verbes: {}, buts: {} };
+  function outil(id) { for (var i = 0; i < OT.liste.length; i++) if (OT.liste[i].id === id) return OT.liste[i]; return null; }
+  function outilFait(o) { return !!(st.outil && st.outil[o.id]); }
+  function boutonVerbe(v) {
+    return OT.verbes[v] ? '<button type="button" class="verbe" data-verbe="' + esc(v) + '" aria-haspopup="dialog">' + esc(v) + "</button>" : "<span>" + esc(v) + "</span>";
+  }
+  function fermerFenetre() { var f = document.getElementById("fenetre"); if (f) { arreter(); f.remove(); if (fermerFenetre.retour && document.contains(fermerFenetre.retour)) fermerFenetre.retour.focus(); fermerFenetre.retour = null; } }
+  function ouvrirVerbe(v, el) {
+    var d = OT.verbes[v]; if (!d) return;
+    fermerFenetre();
+    var c = comp(d.c), h = '<div class="fenetre" id="fenetre"><div class="fenetre-in" role="dialog" aria-modal="true" aria-label="' + esc(v) + '">';
+    h += '<button class="fermer" data-action="fenetre-fermer" aria-label="Fermer">×</button>';
+    h += '<div data-lire><p class="etiquette">Le mot de la consigne</p><h2 class="verbe-titre">' + esc(v) + "</h2>";
+    h += '<h3>Ce que je dois faire</h3><p>' + esc(d.faire) + "</p>";
+    if (c) h += '<h3>Mon objectif</h3><p class="verbe-but"><span class="comp-badge petit">C' + c.id + "</span><span><b>" + esc(c.court) + "</b>" + esc(OT.buts[d.c] || "") + "</span></p>";
+    if (d.debut) h += '<h3>Pour commencer ma réponse</h3><p class="verbe-debut">' + esc(d.debut) + "</p>";
+    if (d.ex) h += '<h3>Exemple de consigne</h3><p class="consigne">' + esc(d.ex) + "</p>";
+    h += parle() + "</div>";
+    if (c) h += '<a class="btn clair" href="#/competences/' + c.id + '">Voir la fiche C' + c.id + "</a>";
+    h += '<button class="btn" data-action="fenetre-fermer">J\'ai compris</button></div></div>';
+    document.body.insertAdjacentHTML("beforeend", h);
+    fermerFenetre.retour = el || null;
+    var b = document.querySelector("#fenetre .fermer"); if (b) b.focus();
+  }
+  function carteOutils() {
+    if (!OT.liste.length) return "";
+    return '<a class="carte acces-comp acces-outils" href="#/outils"><span class="comp-badge outils-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3l8.7-8.7z"/><path d="M14.7 6.3l3-3a4 4 0 0 0-5 5"/></svg></span><span><b>' + esc(OT.titre) + "</b><small>QQOQCP, PAD, ITAMaMi, Ishikawa et les verbes de consigne</small></span>" + I.fleche + "</a>";
+  }
+  function poisson(o) {
+    var L = o.lettres, s = '<svg class="poisson" viewBox="-28 0 372 190" role="img" aria-label="Le diagramme en arête de poisson : cinq familles de causes mènent au problème">';
+    s += '<path d="M12 95H250" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M250 62h78v66h-78z" fill="var(--jaune)" stroke="currentColor" stroke-width="3"/><text x="289" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1d1d1d">Le</text><text x="289" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#1d1d1d">problème</text>';
+    var pos = [[40, 1], [120, 1], [200, 1], [80, 0], [160, 0]];
+    pos.forEach(function (p, i) {
+      if (!L[i]) return;
+      var haut = p[1], x = p[0];
+      s += '<path d="M' + x + " " + (haut ? 28 : 162) + "L" + (x + 34) + ' 95" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>';
+      s += '<text x="' + x + '" y="' + (haut ? 18 : 180) + '" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">' + esc(L[i][1]) + "</text>";
+    });
+    return s + "</svg>";
+  }
+  function pageOutils(id) {
+    if (!OT.liste.length) return page404();
+    var fil = '<nav class="fil"><a href="#/">Accueil</a> › ';
+    if (!id) {
+      var h = '<div class="contenu">' + fil + esc(OT.titre) + "</nav><h1>" + esc(OT.titre) + "</h1>" + makiDit("salut", OT.intro);
+      h += '<div class="actus">' + OT.liste.map(function (o) {
+        return '<a class="carte actu outil-carte' + (outilFait(o) ? " lu" : "") + '" href="#/outils/' + o.id + '"><span class="comp-badge">' + esc(o.sigle) + '</span><span class="actu-txt"><b>' + esc(o.nom) + "</b><span>" + esc(o.court) + (outilFait(o) ? " · vu" : "") + "</span></span></a>";
+      }).join("");
+      h += '<a class="carte actu outil-carte" href="#/outils/verbes"><span class="comp-badge">Aa</span><span class="actu-txt"><b>Les verbes de consigne</b><span>Comprendre ce que chaque verbe me demande</span></span></a></div>';
+      return h + "</div>";
+    }
+    if (id === "verbes") {
+      var v = '<div class="contenu">' + fil + '<a href="#/outils">' + esc(OT.titre) + "</a> › Les verbes</nav><h1>Les verbes de consigne</h1>" + makiDit("pense", "Le verbe de la consigne te dit quoi faire. Touche un verbe pour voir ce qu'il te demande.");
+      CP.liste.forEach(function (c) {
+        var noms = Object.keys(OT.verbes).filter(function (k) { return OT.verbes[k].c === c.id; });
+        if (!noms.length) return;
+        v += '<section class="bloc-mod verbes-comp"><p class="verbe-but"><span class="comp-badge petit">C' + c.id + "</span><span><b>" + esc(c.court) + "</b>" + esc(OT.buts[c.id] || "") + '</span></p><p class="verbes">' + noms.map(boutonVerbe).join("") + "</p></section>";
+      });
+      return v + '<a class="btn clair" href="#/competences">Voir mes compétences C1 à C6</a></div>';
+    }
+    var o = outil(id); if (!o) return page404();
+    var cle = "outil/" + o.id, e = o.question;
+    if (e && (!exo || exo.cle !== cle)) initExo(cle, e);
+    var x = '<div class="contenu etroit article outil">' + fil + '<a href="#/outils">' + esc(OT.titre) + "</a> › " + esc(o.nom) + "</nav>";
+    x += '<header class="tete comp-tete"><span class="comp-badge">' + esc(o.sigle) + "</span><div><small>Outil</small><h1>" + esc(o.nom) + "</h1></div></header>";
+    x += '<article data-lire><h2>À quoi ça sert ?</h2><p>' + esc(o.sert) + "</p><h2>Quand je l'utilise ?</h2><p>" + esc(o.quand) + "</p>" + parle() + "</article>";
+    x += '<article data-lire><h2>Comment ça marche ?</h2>' + (o.schema === "poisson" ? poisson(o) : "") + '<ol class="lettres">' + o.lettres.map(function (l) {
+      return "<li><b>" + esc(l[0]) + "</b><span><strong>" + esc(l[1]) + "</strong>" + esc(l[2]) + "</span></li>";
+    }).join("") + "</ol>" + parle() + "</article>";
+    x += '<article data-lire><h2>Un exemple</h2><p class="doc"><small>La situation</small>' + esc(OT.situation) + "</p>" + (o.exempleTitre ? "<p><b>" + esc(o.exempleTitre) + "</b></p>" : "") + '<dl class="outil-rempli">' + o.exemple.map(function (l) {
+      return "<div><dt>" + esc(l[0]) + "</dt><dd>" + esc(l[1]) + "</dd></div>";
+    }).join("") + "</dl>" + parle() + "</article>";
+    if (o.astuce) x += '<section class="bloc-mod astuce" data-lire><p class="etiquette">L\'astuce de Maki</p><p>' + esc(o.astuce) + "</p></section>";
+    if (e) {
+      x += "<h2>As-tu compris ?</h2>" + vueExo(e);
+      if (exo.fini) {
+        if (!outilFait(o)) { if (!st.outil) st.outil = {}; st.outil[o.id] = true; save(); }
+        x += '<div class="retour oui succes" data-lire role="status">' + window.DECOR.maki("bravo", 64) + "<div><b>" + (exo.raté ? "C'est ça, bien joué !" : "Bravo, du premier coup !") + "</b> " + esc(e.retour || "") + "</div></div>";
+      }
+    }
+    if (o.lien) x += '<a class="btn clair" href="' + o.lien.href + '">' + esc(o.lien.texte) + "</a>";
+    x += '<a class="btn large' + (exo && exo.fini ? "" : " clair") + '" href="#/outils">Voir les autres outils</a>';
+    return x + "</div>";
+  }
   /* ---------- L'appli sur le téléphone ---------- */
   function installee() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
   function carteInstaller() {
@@ -1338,6 +1424,7 @@
   function conseilPage() {
     var p = page, g = global();
     if (p[0] === "actus") return p[1] ? "Lis l'article, ou touche « Écouter » pour que je te le lise. Ensuite, réponds à la question." : "Choisis un article. Chacun se lit en une minute.";
+    if (p[0] === "outils") return p[1] === "verbes" ? "Touche un verbe : je t'explique ce qu'il te demande." : p[1] ? "Lis à quoi sert l'outil, puis regarde l'exemple. Ensuite, réponds à la question." : "Choisis un outil. Chacun t'aide à analyser une situation.";
     if (p[0] === "installer") return "Suis les étapes une par une. Si tu n'y arrives pas, demande à ton professeur.";
     if (p[0] === "competences") return p[1] ? "Lis d'abord « Comprendre », puis la méthode et l'exemple. Ensuite, entraîne-toi avec les exercices." : "Les six compétences, c'est ce que tu dois savoir faire en PSE. Dans une évaluation, chaque question en travaille une. Touche une compétence pour la découvrir.";
     if (p[0] === "qcm") return "Prends ton temps : lis chaque réponse avant de choisir. Il te faut 7 sur 10 pour valider. Une erreur ? Lis l'explication, c'est comme ça qu'on apprend.";
@@ -1390,11 +1477,13 @@
     else if (p[0] === "competences") h = pageCompetences(p[1], p[2], p[3]);
     else if (p[0] === "installer") h = pageInstaller();
     else if (p[0] === "actus") h = pageActus(p[1]);
+    else if (p[0] === "outils") h = pageOutils(p[1]);
     else if (p[2] === "lecon") h = pageLecon(p[0], p[1].toUpperCase(), p[3]);
     else if (p[1]) h = pageModule(p[0], p[1].toUpperCase());
     else h = pageNiveau(p[0]);
     if (p[0] !== "qcm") quiz = null;
-    if (p[2] !== "lecon" && p[0] !== "jeu" && !(p[0] === "competences" && p[2] === "exo") && !(p[0] === "actus" && p[1])) exo = null;
+    if (p[2] !== "lecon" && p[0] !== "jeu" && !(p[0] === "competences" && p[2] === "exo") && !(p[0] === "actus" && p[1]) && !(p[0] === "outils" && p[1])) exo = null;
+    fermerFenetre();
     $app.innerHTML = h; majEntete(); placerMarcheur(); majMaki();
     document.documentElement.classList.toggle("porte", !ouvert || enIntro);
     document.documentElement.classList.toggle("en-lecon", ouvert && !enIntro && (p[2] === "lecon" || (p[0] === "jeu" && !!p[2]) || (p[0] === "competences" && p[2] === "exo")));
@@ -1410,7 +1499,13 @@
   }
   function montre(t, el) { if (el) el.insertAdjacentHTML("afterend", '<input class="copie" readonly value="' + esc(t) + '">'); }
   document.addEventListener("click", function (e) {
-    var el = e.target.closest("[data-rep],[data-action],[data-av],[data-vu],[data-copie],[data-onglet],[data-modtab],[data-niv],[data-theme],[data-faq],[data-acc],[data-exo]"); if (!el) return;
+    var el = e.target.closest("[data-rep],[data-action],[data-av],[data-vu],[data-copie],[data-onglet],[data-modtab],[data-niv],[data-theme],[data-faq],[data-acc],[data-exo],[data-verbe]"); if (!el) { if (e.target.id === "fenetre") fermerFenetre(); return; }
+    if (el.dataset.verbe) { e.preventDefault(); ouvrirVerbe(el.dataset.verbe, el); return; }
+    if (el.dataset.action === "fenetre-fermer") { fermerFenetre(); return; }
+    if (el.dataset.exo != null && el.dataset.exo !== "" && page[0] === "outils" && page[1]) {
+      var ou = outil(page[1]); if (ou && ou.question && exo && jouerExo(ou.question, el.dataset.exo)) { var y3 = window.scrollY; rendu(); window.scrollTo(0, y3); }
+      return;
+    }
     if (el.dataset.action && el.dataset.action.indexOf("reel-") === 0) { reelAction(el.dataset.action); return; }
     if (el.dataset.exo != null && el.dataset.exo !== "" && page[0] === "actus" && page[1]) {
       var ar = actu(page[1]); if (ar && ar.question && exo && jouerExo(ar.question, el.dataset.exo)) { var y2 = window.scrollY; rendu(); window.scrollTo(0, y2); }
@@ -1464,6 +1559,7 @@
     }
   });
   document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && document.getElementById("fenetre")) { fermerFenetre(); return; }
     if (e.key !== "Enter" || !e.target || !e.target.classList || !e.target.classList.contains("code-secret")) return;
     var b = document.querySelector('[data-action="cpt-creer"],[data-action="cpt-entrer"],[data-action="cpt-retrouver"],[data-action="cpt-changer"]'); if (b) { e.preventDefault(); b.click(); }
   });

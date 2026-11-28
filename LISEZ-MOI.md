@@ -136,3 +136,11 @@ La rubrique « Je m'informe » propose de courts articles en lecture facile, cla
 Tous les articles sont dans `js/infos.js`. Pour en ajouter un, copiez un bloc et changez les textes. Le premier de la liste est affiché « à la une » sur l'accueil.
 
 Ces articles sont rédigés pour le site à partir de sources officielles. Ce ne sont pas des copies d'articles de presse, qui sont protégés par le droit d'auteur.
+
+## Mes outils et les verbes de consigne
+
+Tout se trouve dans le fichier `js/outils.js`.
+
+- **Les verbes de consigne** : dans les fiches « Mes compétences », chaque verbe est un bouton. Quand l'élève le touche, une fenêtre lui rappelle ce qu'il doit faire, l'objectif de la compétence (C1 à C6), une façon de commencer sa réponse et un exemple de consigne. Pour changer une explication, modifiez le texte du verbe dans la partie `verbes`. Le nom du verbe doit être écrit exactement comme dans `js/competences.js`.
+- **Mes outils** (carte sur la page d'accueil) : QQOQCP, schéma du PAD, ITAMaMi, diagramme d'Ishikawa, et la liste de tous les verbes. Chaque outil a ses cases (`lettres`), un exemple rempli (`exemple`) et une question (`question`). La situation d'exemple, commune aux quatre outils, est dans `situation`.
+- Pour ajouter un outil, copiez un bloc de la partie `liste`, changez son `id` et ses textes.
