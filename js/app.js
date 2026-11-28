@@ -445,6 +445,7 @@
 
   /* ---------- Accessibilité : lecture à voix haute et réglages ---------- */
   // La voix est celle du téléphone ou de l'ordinateur (synthèse vocale du navigateur) : rien n'est envoyé.
+  var IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   var synth = window.speechSynthesis, VOIX_OK = !!(synth && window.SpeechSynthesisUtterance), lecture = null;
   function acc() { if (!st.acc) st.acc = { t: 0, f: 0, c: 0, a: 0, lent: 0, auto: 0 }; return st.acc; }
   function appliquerAcc() {
@@ -512,8 +513,10 @@
       t += (170 + 62 * m.textContent.length + (/[.!?:;,…]$/.test(m.textContent) ? 280 : 0)) / lent;
     });
     var u = new SpeechSynthesisUtterance(texte), v = voixFr();
-    u.lang = v ? v.lang : "fr-FR"; if (v) u.voice = v; u.rate = lent;
-    var l = lecture = { mots: mots, btn: btn, libelle: btn ? btn.querySelector("span").textContent : "", horloge: 0, attente: 0, precis: false };
+    // Sur iPhone et iPad, on ne force une voix que si l'élève l'a choisie : la voix française du téléphone est la plus fiable
+    var choisie = !!acc().voix && v && v.name === acc().voix;
+    u.lang = v && (!IOS || choisie) ? v.lang : "fr-FR"; if (v && (!IOS || choisie)) u.voice = v; u.rate = lent; u.volume = 1; u.pitch = 1;
+    var l = lecture = { u: u, mots: mots, btn: btn, libelle: btn ? btn.querySelector("span").textContent : "", horloge: 0, attente: 0, precis: false };
     function montrer(i) {
       if (lecture !== l || i < 0 || i >= mots.length) return;
       mots.forEach(function (m, k) { m.classList.toggle("dit", k === i); });
@@ -540,6 +543,7 @@
     };
     u.onend = u.onerror = function () { if (lecture === l) arreter(); };
     if (btn) { btn.classList.add("actif"); btn.querySelector("span").textContent = "Arrêter"; }
+    try { synth.resume(); } catch (e) {}
     synth.speak(u);
   }
   function pageAcces() {
@@ -558,6 +562,7 @@
       var vs = voixDispo(), cour = voixFr();
       if (vs.length > 1) h += '<fieldset class="reglage"><legend>Voix</legend><select id="voix" aria-label="Choisir la voix">' + vs.map(function (v) { return '<option value="' + esc(v.name) + '"' + (cour && cour.name === v.name ? " selected" : "") + ">" + esc(v.name) + "</option>"; }).join("") + "</select></fieldset>";
       h += '<div data-lire class="essai"><p>Bonjour, je suis la voix du site. Je lis les textes pour toi.</p>' + parle("Essayer la voix") + "</div>";
+      h += '<p class="petit">Tu n\'entends rien ? Monte le volume du téléphone' + (IOS ? ", et vérifie que le bouton « silencieux », sur le côté de l'iPhone, n'est pas activé" : "") + ".</p>";
       h += choix("Vitesse de la voix", "lent", ["Normale", "Lente"]);
       h += choix("Lire les questions des QCM toute seule", "auto", ["Non", "Oui"]);
     } else h += '<p class="vide-msg">La lecture à voix haute n\'est pas disponible sur ce navigateur.</p>';
